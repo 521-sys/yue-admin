@@ -1,0 +1,5 @@
+import React,{useState}from'react';import{request}from'../api';
+export default function Login({onLogin}:{onLogin:()=>void}){
+ const[u,setU]=useState('admin'),[p,setP]=useState(''),[error,setError]=useState(''),[busy,setBusy]=useState(false);
+ return <div className="login"><form onSubmit={async e=>{e.preventDefault();setBusy(true);setError('');try{const d=await request('/admin/auth/login',{method:'POST',body:JSON.stringify({username:u,password:p})});sessionStorage.setItem('admin_token',d.token);onLogin()}catch(e:any){setError(e.message)}finally{setBusy(false)}}}><div className="brand-icon">粤</div><h1>粤语学习后台</h1><p className="muted">管理学习内容，让每一句粤语更好学。</p><label>管理员账号<input autoComplete="username" value={u} onChange={e=>setU(e.target.value)} required/></label><label>密码<input autoComplete="current-password" type="password" value={p} onChange={e=>setP(e.target.value)} required/></label><button className="primary" disabled={busy}>{busy?'登录中…':'登录后台'}</button>{error&&<div className="error" role="alert">{error}</div>}</form></div>
+}
