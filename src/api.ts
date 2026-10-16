@@ -1,4 +1,4 @@
-export const API = import.meta.env.VITE_API_BASE || 'http://localhost:8080/api';
+export const API = import.meta.env.VITE_API_BASE || '/api';
 export function logout() { sessionStorage.removeItem('admin_token'); window.dispatchEvent(new Event('admin-auth-changed')); }
 export async function request<T = any>(path: string, init: RequestInit = {}): Promise<T> {
  const headers = new Headers(init.headers);
@@ -9,6 +9,6 @@ export async function request<T = any>(path: string, init: RequestInit = {}): Pr
  if(!response.ok){const data=await response.json().catch(()=>null);throw new Error(data?.error || (response.status===403?'没有管理员权限':'请求失败，请稍后重试'));}
  return response.status===204?undefined as T:response.json();
 }
-export function mediaUrl(path?: string) { if(!path)return ''; return new URL(path,new URL(API,location.href)).href; }
+export function mediaUrl(path?: string) { if(!path)return ''; return new URL(path,location.origin).href; }
 export function audioKeyUrl(key?: string){return key?mediaUrl(key.startsWith('upload:')?'/audio/uploads/'+key.slice(7):'/audio/'+key):'';}
 export const dateText=(value?:string)=>value?new Date(value).toLocaleString('zh-CN',{timeZone:'Asia/Shanghai'}):'—';
