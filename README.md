@@ -9,7 +9,19 @@ npm install
 npm run dev
 ```
 
-默认接口地址为 `http://localhost:8080/api`，可通过 `VITE_API_BASE` 覆盖。
+默认接口地址为同源 `/api`；本地独立运行时可用
+`VITE_API_BASE=http://localhost:8080/api` 覆盖。
+
+## 生产入口
+
+生产管理端复用现有服务器、域名和 TLS 证书，入口固定为
+`https://gnep.online/admin/`，接口使用同源 `/api`。`npm run build` 的资源地址
+以 `/admin/` 开头，产物部署到服务器 `/var/www/yue-admin`；不需要创建新服务器、
+新域名或 DNS 记录。
+
+生产发布必须先完成数据库迁移和后端验证，再切换管理端，最后发布依赖公共场景
+接口的用户网页。完整备份、Nginx 路由、验证和回滚步骤见
+`yue-backend/docs/admin-v1-setup.md`。
 
 ## 当前功能（第一版）
 
