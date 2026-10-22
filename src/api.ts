@@ -10,5 +10,10 @@ export async function request<T = any>(path: string, init: RequestInit = {}): Pr
  return response.status===204?undefined as T:response.json();
 }
 export function mediaUrl(path?: string) { if(!path)return ''; return new URL(path,location.origin).href; }
+export async function adminMediaBlobUrl(path:string){
+ const headers=new Headers();const token=sessionStorage.getItem('admin_token');if(token)headers.set('Authorization',`Bearer ${token}`);
+ const response=await fetch(mediaUrl(path),{headers});if(response.status===401)logout();if(!response.ok)throw new Error(response.status===403?'没有管理员权限':'视频预览加载失败');
+ return URL.createObjectURL(await response.blob());
+}
 export function audioKeyUrl(key?: string){return key?mediaUrl(key.startsWith('upload:')?'/audio/uploads/'+key.slice(7):'/audio/'+key):'';}
 export const dateText=(value?:string)=>value?new Date(value).toLocaleString('zh-CN',{timeZone:'Asia/Shanghai'}):'—';

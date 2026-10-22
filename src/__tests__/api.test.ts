@@ -1,5 +1,5 @@
 import { afterEach, expect, it, vi } from 'vitest';
-import { mediaUrl, request } from '../api';
+import { adminMediaBlobUrl, mediaUrl, request } from '../api';
 afterEach(() => { vi.restoreAllMocks(); sessionStorage.clear(); });
 it('uploads FormData without breaking its browser boundary', async () => {
   const fetcher=vi.spyOn(globalThis,'fetch').mockResolvedValue(new Response('{"id":"upload:1"}',{status:200}));
@@ -27,4 +27,12 @@ it('uses the same-origin api prefix by default',async()=>{
 });
 it('keeps uploaded media outside the api prefix',()=>{
  expect(mediaUrl('/audio/uploads/demo')).toBe('http://localhost:3000/audio/uploads/demo');
+});
+it('loads protected video previews with the admin bearer token',async()=>{
+ sessionStorage.setItem('admin_token','secret');
+ const fetcher=vi.spyOn(globalThis,'fetch').mockResolvedValue(new Response(new Blob(['video'],{type:'video/mp4'}),{status:200}));
+ const original=URL.createObjectURL;Object.defineProperty(URL,'createObjectURL',{configurable:true,value:vi.fn(()=> 'blob:preview')});
+ try{await expect(adminMediaBlobUrl('/api/admin/dubbing-materials/1/parts/2/video')).resolves.toBe('blob:preview');
+  const headers=new Headers(fetcher.mock.calls[0][1]?.headers);expect(headers.get('Authorization')).toBe('Bearer secret');
+ }finally{Object.defineProperty(URL,'createObjectURL',{configurable:true,value:original})}
 });
