@@ -75,3 +75,27 @@ it('disables video replacement and part deletion while published',async()=>{
  expect(await screen.findByLabelText('Part 01 视频文件')).toBeDisabled();
  expect(screen.getAllByRole('button',{name:'删除 Part'}).every(button=>(button as HTMLButtonElement).disabled)).toBe(true);
 });
+
+it('uploads a material cover with the version and prevents uploads over unsaved edits',async()=>{
+ const request=vi.spyOn(api,'request').mockResolvedValueOnce(detail).mockResolvedValueOnce({...detail,materialVersion:3,cover:{url:'/api/admin/dubbing-materials/7/cover?v=1',originalName:'cover.png',contentType:'image/png',sizeBytes:2048,width:1280,height:720,coverVersion:1}});
+ vi.spyOn(api,'adminMediaBlobUrl').mockResolvedValue('blob:cover');
+ const revoke=vi.spyOn(URL,'revokeObjectURL').mockImplementation(()=>{});
+ render(<DubbingMaterialEditor id="7" back={()=>{}} dirtyChanged={()=>{}}/>);
+ const input=await screen.findByLabelText('素材封面文件');
+ const file=new File(['image'],'cover.png',{type:'image/png'});
+ fireEvent.change(input,{target:{files:[file]}});fireEvent.click(screen.getByRole('button',{name:'上传素材封面'}));
+ expect(await screen.findByText('封面上传成功')).toBeInTheDocument();
+ expect(request.mock.calls[1][0]).toBe('/admin/dubbing-materials/7/cover?materialVersion=2');
+ expect((request.mock.calls[1][1]?.body as FormData).get('file')).toBe(file);
+ expect(await screen.findByAltText('素材封面预览')).toHaveAttribute('src','blob:cover');
+ fireEvent.change(screen.getByLabelText('素材标题'),{target:{value:'未保存'}});expect(input).toBeDisabled();
+ cleanup();expect(revoke).toHaveBeenCalledWith('blob:cover');
+});
+
+it('disables cover selection before creation and while published',async()=>{
+ const request=vi.spyOn(api,'request').mockResolvedValue({...detail,status:'PUBLISHED'});
+ const view=render(<DubbingMaterialEditor id="new" back={()=>{}} dirtyChanged={()=>{}}/>);
+ expect(screen.getByLabelText('素材封面文件')).toBeDisabled();view.unmount();
+ render(<DubbingMaterialEditor id="7" back={()=>{}} dirtyChanged={()=>{}}/>);
+ await screen.findByLabelText('素材标题');expect(screen.getByLabelText('素材封面文件')).toBeDisabled();
+});
